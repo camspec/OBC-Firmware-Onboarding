@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
 
 /* LM75BD Registers (p.8) */
 #define LM75BD_REG_CONF 0x01U  /* Configuration Register (R/W) */
@@ -26,8 +27,22 @@ error_code_t lm75bdInit(lm75bd_config_t *config) {
 }
 
 error_code_t readTempLM75BD(uint8_t devAddr, float *temp) {
-  /* Implement this driver function */
-  
+  error_code_t errCode;
+
+  if (temp == NULL) {
+    return ERR_CODE_INVALID_ARG;
+  }
+
+  uint8_t ptrBuffer[1] = {0};
+  RETURN_IF_ERROR_CODE(i2cSendTo(devAddr, ptrBuffer, 1));
+
+  uint8_t tempBuffer[2] = {0};
+  RETURN_IF_ERROR_CODE(i2cReceiveFrom(devAddr, tempBuffer, 2));
+
+  int16_t tempData = (int16_t) ((tempBuffer[0] << 8) | tempBuffer[1]) >> 5;
+
+  *temp = tempData * 0.125;
+
   return ERR_CODE_SUCCESS;
 }
 
