@@ -40,7 +40,7 @@ error_code_t readTempLM75BD(uint8_t devAddr, float *temp) {
 
   int16_t tempData = (int16_t) ((tempBuffer[0] << 8) | tempBuffer[1]) >> 5;
 
-  *temp = tempData * 0.125;
+  *temp = tempData * 0.125f;
 
   return ERR_CODE_SUCCESS;
 }
