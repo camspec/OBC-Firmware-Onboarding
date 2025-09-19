@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
-#include <stdio.h>
 
 /* LM75BD Registers (p.8) */
 #define LM75BD_REG_CONF 0x01U  /* Configuration Register (R/W) */
