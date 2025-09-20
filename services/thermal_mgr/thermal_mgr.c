@@ -59,11 +59,12 @@ error_code_t thermalMgrSendEvent(thermal_mgr_event_t *event) {
 }
 
 void osHandlerLM75BD(void) {
-  /* Implement this function */
+  thermal_mgr_event_t event = {.type = THERMAL_MGR_EVENT_OS_INTERRUPT};
+  thermalMgrSendEvent(&event);
 }
 
 static void thermalMgr(void *pvParameters) {
-  lm75bd_config_t config = *(lm75bd_config_t *) pvParameters;
+  lm75bd_config_t config = *(lm75bd_config_t *)pvParameters;
 
   thermal_mgr_event_t event;
   error_code_t errCode;
@@ -74,8 +75,21 @@ static void thermalMgr(void *pvParameters) {
       if (xQueueReceive(thermalMgrQueueHandle, &event, portMAX_DELAY) == pdPASS) {
         if (event.type == THERMAL_MGR_EVENT_MEASURE_TEMP_CMD) {   
           errCode = readTempLM75BD(config.devAddr, &temp);
+
           if (errCode == ERR_CODE_SUCCESS) {
             addTemperatureTelemetry(temp);
+          } else {
+            LOG_ERROR_CODE(errCode);
+          }
+        } else if (event.type == THERMAL_MGR_EVENT_OS_INTERRUPT) {
+          errCode = readTempLM75BD(config.devAddr, &temp);
+
+          if (errCode == ERR_CODE_SUCCESS) {
+            if (temp > config.hysteresisThresholdCelsius) {
+              overTemperatureDetected();
+            } else {
+              safeOperatingConditions();
+            }
           } else {
             LOG_ERROR_CODE(errCode);
           }
