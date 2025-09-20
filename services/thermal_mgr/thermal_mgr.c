@@ -64,7 +64,7 @@ void osHandlerLM75BD(void) {
 }
 
 static void thermalMgr(void *pvParameters) {
-  lm75bd_config_t config = *(lm75bd_config_t *)pvParameters;
+  lm75bd_config_t config = *(lm75bd_config_t*)pvParameters;
 
   thermal_mgr_event_t event;
   error_code_t errCode;
