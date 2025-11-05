@@ -93,6 +93,8 @@ static void thermalMgr(void *pvParameters) {
           } else {
             LOG_ERROR_CODE(errCode);
           }
+        } else {
+          LOG_ERROR_CODE(ERR_CODE_INVALID_QUEUE_MSG);
         }
       }
     }
