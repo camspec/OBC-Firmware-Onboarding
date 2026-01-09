@@ -66,38 +66,50 @@ void osHandlerLM75BD(void) {
 }
 
 static void thermalMgr(void *pvParameters) {
+  if (pvParameters == NULL) {
+    LOG_ERROR_CODE(ERR_CODE_INVALID_ARG);
+    while (1) {
+      vTaskDelay(portMAX_DELAY);
+    }
+  }
+
   lm75bd_config_t config = *(lm75bd_config_t*)pvParameters;
 
   thermal_mgr_event_t event;
   error_code_t errCode;
   float temp;
 
+  if (thermalMgrQueueHandle == NULL) {
+    LOG_ERROR_CODE(ERR_CODE_INVALID_STATE);
+    while (1) {
+      vTaskDelay(portMAX_DELAY);
+    }
+  }
+
   while (1) {
-    if (thermalMgrQueueHandle != NULL) {
-      if (xQueueReceive(thermalMgrQueueHandle, &event, portMAX_DELAY) == pdPASS) {
-        if (event.type == THERMAL_MGR_EVENT_MEASURE_TEMP_CMD) {   
-          errCode = readTempLM75BD(config.devAddr, &temp);
+    if (xQueueReceive(thermalMgrQueueHandle, &event, portMAX_DELAY) == pdPASS) {
+      if (event.type == THERMAL_MGR_EVENT_MEASURE_TEMP_CMD) {   
+        errCode = readTempLM75BD(config.devAddr, &temp);
 
-          if (errCode == ERR_CODE_SUCCESS) {
-            addTemperatureTelemetry(temp);
-          } else {
-            LOG_ERROR_CODE(errCode);
-          }
-        } else if (event.type == THERMAL_MGR_EVENT_OS_INTERRUPT) {
-          errCode = readTempLM75BD(config.devAddr, &temp);
+        if (errCode == ERR_CODE_SUCCESS) {
+          addTemperatureTelemetry(temp);
+        } else {
+          LOG_ERROR_CODE(errCode);
+        }
+      } else if (event.type == THERMAL_MGR_EVENT_OS_INTERRUPT) {
+        errCode = readTempLM75BD(config.devAddr, &temp);
 
-          if (errCode == ERR_CODE_SUCCESS) {
-            if (temp > config.hysteresisThresholdCelsius) {
-              overTemperatureDetected();
-            } else {
-              safeOperatingConditions();
-            }
+        if (errCode == ERR_CODE_SUCCESS) {
+          if (temp > config.hysteresisThresholdCelsius) {
+            overTemperatureDetected();
           } else {
-            LOG_ERROR_CODE(errCode);
+            safeOperatingConditions();
           }
         } else {
-          LOG_ERROR_CODE(ERR_CODE_INVALID_QUEUE_MSG);
+          LOG_ERROR_CODE(errCode);
         }
+      } else {
+        LOG_ERROR_CODE(ERR_CODE_INVALID_QUEUE_MSG);
       }
     }
   }
