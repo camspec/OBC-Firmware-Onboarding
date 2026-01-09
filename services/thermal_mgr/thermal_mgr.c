@@ -60,7 +60,9 @@ error_code_t thermalMgrSendEvent(thermal_mgr_event_t *event) {
 
 void osHandlerLM75BD(void) {
   thermal_mgr_event_t event = {.type = THERMAL_MGR_EVENT_OS_INTERRUPT};
-  thermalMgrSendEvent(&event);
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  xQueueSendFromISR(thermalMgrQueueHandle, &event, &xHigherPriorityTaskWoken);
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 static void thermalMgr(void *pvParameters) {
